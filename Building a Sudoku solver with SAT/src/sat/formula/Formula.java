@@ -7,6 +7,8 @@
 package sat.formula;
 
 import immutable.ImList;
+import immutable.EmptyImList;
+import immutable.NonEmptyImList;
 
 import java.util.Iterator;
 
@@ -16,6 +18,11 @@ import sat.env.Variable;
  * Formula represents an immutable boolean formula in
  * conjunctive normal form, intended to be solved by a
  * SAT solver.
+ * Datatype definition:
+ *   Formula = ImList<Clause>
+ *   Clause  = ImList<Literal>
+ *   Literal = Positive(v: Var) + Negative(v: Var)
+ *   Var     = String
  */
 public class Formula {
     private final ImList<Clause> clauses;
@@ -46,9 +53,8 @@ public class Formula {
      * @return the true problem
      */
     public Formula() {
-
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        clauses = new EmptyImList<Clause>();
     }
 
     /**
@@ -59,7 +65,7 @@ public class Formula {
      */
     public Formula(Variable l) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        clauses = new NonEmptyImList<Clause>(new Clause(PosLiteral.make(l)));
     }
 
     /**
@@ -69,7 +75,11 @@ public class Formula {
      */
     public Formula(Clause c) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        clauses = new NonEmptyImList<Clause>(c);
+    }
+    
+    private Formula(ImList<Clause> clauses) {
+        this.clauses = clauses;
     }
 
     /**
@@ -79,7 +89,7 @@ public class Formula {
      */
     public Formula addClause(Clause c) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return new Formula(clauses.add(c));
     }
 
     /**
@@ -89,7 +99,7 @@ public class Formula {
      */
     public ImList<Clause> getClauses() {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses;
     }
 
     /**
@@ -100,7 +110,7 @@ public class Formula {
      */
     public Iterator<Clause> iterator() {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses.iterator();
     }
 
     /**
@@ -108,7 +118,12 @@ public class Formula {
      */
     public Formula and(Formula p) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        Formula f = this;
+        for (Iterator<Clause> it = p.iterator(); it.hasNext();) {
+            Clause c = it.next();
+            f = f.addClause(c);
+        }
+        return f;
     }
 
     /**
@@ -118,8 +133,19 @@ public class Formula {
         // TODO: implement this.
         // Hint: you'll need to use the distributive law to preserve conjunctive normal form, i.e.:
         //   to do (a & b) .or (c & d),
-        //   you'll need to make (a | b) & (a | c) & (b | c) & (b | d)        
-        throw new RuntimeException("not yet implemented.");
+        //   you'll need to make (a | c) & (a | d) & (b | c) & (b | d)    
+        Formula f = new Formula();
+        for (Iterator<Clause> it1 = iterator(); it1.hasNext();) {
+            Clause c1 = it1.next();
+            for (Iterator<Clause> it2 = iterator(); it2.hasNext();) {
+                Clause c2 = it2.next();
+                Clause c = c1.merge(c2);
+                if (c != null) {
+                    f.addClause(c);
+                }
+            }
+        }
+        return f;
     }
 
     /**
@@ -134,7 +160,9 @@ public class Formula {
         //   you'll need to make !((a | b) & c) 
         //                       => (!a & !b) | !c            (moving negation down to the literals)
         //                       => (!a | !c) & (!b | !c)    (conjunctive normal form)
-        throw new RuntimeException("not yet implemented.");
+        Formula f = new Formula();
+        
+        return f;
     }
 
     /**
@@ -143,7 +171,7 @@ public class Formula {
      */
     public int getSize() {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        return clauses.size();
     }
 
     /**

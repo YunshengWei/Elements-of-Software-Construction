@@ -6,7 +6,7 @@
  */
 package sudoku;
 
-import java.io.IOException;
+import java.io.*;
 
 import sat.env.Environment;
 import sat.env.Variable;
@@ -30,13 +30,34 @@ public class Sudoku {
     // use it to index into occupies[i][j][k])
     private final int[][] square;
     // occupies [i,j,k] means that kth symbol occupies entry in row i, column j
-    private final Variable[][][] occupies;
+    private final Variable[][][] occupies = null;
 
-    // Rep invariant
-    // TODO: write your rep invariant here
+    // Rep invariant:
+    // size == dim * dim
+    // square.length == size
+    // square[i].length == size for 0 <= i < dim
+    // square[i][j] is in {-1, 0, 1, ..., size - 1} for 0 <= i, j < dim
     private void checkRep() {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        // check whether assertions are turned on.
+        // if they're not on, we want to avoid all the recursive
+        // traversal that checkRep() would do.
+        try {
+            assert false;
+        } catch (AssertionError e) {
+            assert size == dim * dim : "Sudoku, Rep invariant: size == dim * dim";
+            assert square.length == size : "Sudoku, Rep invariant: size == square.length";
+            for (int i = 0; i < size; i++) {
+                assert size == square[i].length : "Sudoku, Rep invariant: "
+                    + "square[i].length == size for 0 <=i < dim";
+                for (int j = 0; j < size; j++) {
+                    assert square[i][j] >= -1 && square[i][j] < size :
+                        "Sudoku, Rep invariant: square[i][j] is in "
+                      + "{-1, 0, 1, ..., size - 1} for 0 <= i, j < dim";
+                }
+            }
+        }
+        
     }
 
     /**
@@ -48,7 +69,10 @@ public class Sudoku {
      */
     public Sudoku(int dim) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        this.dim = dim;
+        this.size = dim * dim;
+        this.square = new int[size][size];
+        checkRep();
     }
 
     /**
@@ -59,12 +83,9 @@ public class Sudoku {
      *            the square in the ith row and jth column, contains 0 for a
      *            blank, else i to represent the digit i. So { { 0, 0, 0, 1 }, {
      *            2, 3, 0, 4 }, { 0, 0, 0, 3 }, { 4, 1, 0, 2 } } represents the
-     *            dimension-2 Sudoku grid: 
-     *            
-     *            ...1 
-     *            23.4 
-     *            ...3
-     *            41.2
+     *            dimension-2 Sudoku grid:
+     * 
+     *            ...1 23.4 ...3 41.2
      * 
      * @param dim
      *            dimension of puzzle Requires that dim*dim == square.length ==
@@ -72,7 +93,17 @@ public class Sudoku {
      */
     public Sudoku(int dim, int[][] square) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        this(dim);
+        for (int i = 0; i < square.length; i++) {
+            for (int j = 0; j < square[i].length; j++) {
+                if (square[i][j] == 0) {
+                    this.square[i][j] = -1;
+                } else {
+                    this.square[i][j] = square[i][j] - 1;
+                }
+            }
+        }
+        checkRep();
     }
 
     /**
@@ -96,7 +127,26 @@ public class Sudoku {
     public static Sudoku fromFile(int dim, String filename) throws IOException,
             ParseException {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        int size = dim * dim;
+        int[][] square = new int[size][size];
+        try (BufferedReader reader = 
+                new BufferedReader(new FileReader(new File(filename)))) {
+            try {
+                for (int i = 0; i < size; i++) {
+                    String line = reader.readLine();
+                    for (int j = 0; j < size; j++) {
+                        if (line.charAt(j) == '.') {
+                            square[i][j] = 0;
+                        } else {
+                            square[i][j] = Integer.parseInt(line.substring(j, j + 1));
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                throw new ParseException("Grammatical errors in " + filename);
+            }
+        }
+        return new Sudoku(dim, square);
     }
 
     /**
@@ -111,17 +161,24 @@ public class Sudoku {
 
     /**
      * Produce readable string representation of this Sukoku grid, e.g. for a 4
-     * x 4 sudoku problem: 
-     *   12.4 
-     *   3412 
-     *   2.43 
-     *   4321
+     * x 4 sudoku problem: 12.4 3412 2.43 4321
      * 
      * @return a string corresponding to this grid
      */
     public String toString() {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (square[i][j] == -1) {
+                    sb.append('.');
+                } else {
+                    sb.append(square[i][j] + 1);
+                }
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 
     /**
