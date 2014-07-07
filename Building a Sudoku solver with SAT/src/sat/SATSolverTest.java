@@ -7,6 +7,10 @@ import org.junit.Test;
 import sat.formula.Clause;
 import sat.formula.Literal;
 import sat.formula.PosLiteral;
+import sat.formula.Formula;
+import sat.env.Environment;
+import sat.env.Variable;
+import sat.env.Bool;
 
 public class SATSolverTest {
     Literal a = PosLiteral.make("a");
@@ -25,6 +29,44 @@ public class SATSolverTest {
     }
 
     // TODO: put your test cases here
+    @Test
+    public void testSolve1() {
+        Formula f = new Formula();
+        Clause c = new Clause();
+        c = c.add(a);
+        c = c.add(nb);
+        f = f.addClause(c);
+        c = new Clause();
+        c = c.add(a);
+        c = c.add(b);
+        f = f.addClause(c);
+        Environment e = SATSolver.solve(f);
+        assertTrue(e.get(new Variable("a")) == Bool.TRUE);
+        assertTrue(e.get(new Variable("b")) == Bool.UNDEFINED);
+    }
+    
+    @Test
+    public void testSolve2() {
+        Formula f = new Formula();
+        f = f.addClause(new Clause(a));
+        f = f.addClause(new Clause(b));
+        f = f.addClause(new Clause(a));
+        f = f.addClause(new Clause(nb));
+        Environment e = SATSolver.solve(f);
+        assertTrue(e == null);
+    }
+    
+    @Test
+    public void testSolve3() {
+        Formula f = new Formula();
+        f = f.addClause(new Clause(a));
+        f = f.addClause(new Clause(b));
+        f = f.addClause(new Clause(nb).add(c));
+        Environment e = SATSolver.solve(f);
+        assertTrue(e.get(new Variable("a")) == Bool.TRUE);
+        assertTrue(e.get(new Variable("b")) == Bool.TRUE);
+        assertTrue(e.get(new Variable("c")) == Bool.TRUE);
+    }
 
     
 }

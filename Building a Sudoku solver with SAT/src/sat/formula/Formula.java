@@ -119,8 +119,7 @@ public class Formula {
     public Formula and(Formula p) {
         // TODO: implement this.
         Formula f = this;
-        for (Iterator<Clause> it = p.iterator(); it.hasNext();) {
-            Clause c = it.next();
+        for (Clause c : clauses) {
             f = f.addClause(c);
         }
         return f;
@@ -135,10 +134,8 @@ public class Formula {
         //   to do (a & b) .or (c & d),
         //   you'll need to make (a | c) & (a | d) & (b | c) & (b | d)    
         Formula f = new Formula();
-        for (Iterator<Clause> it1 = iterator(); it1.hasNext();) {
-            Clause c1 = it1.next();
-            for (Iterator<Clause> it2 = iterator(); it2.hasNext();) {
-                Clause c2 = it2.next();
+        for (Clause c1 : clauses) {
+            for (Clause c2 : p.clauses) {
                 Clause c = c1.merge(c2);
                 if (c != null) {
                     f.addClause(c);
@@ -160,8 +157,14 @@ public class Formula {
         //   you'll need to make !((a | b) & c) 
         //                       => (!a & !b) | !c            (moving negation down to the literals)
         //                       => (!a | !c) & (!b | !c)    (conjunctive normal form)
-        Formula f = new Formula();
-        
+        Formula f = new Formula(new Clause());
+        for (Clause c : clauses) {
+            Formula f2 = new Formula();
+            for (Literal l : c) {
+                f2.addClause(new Clause(l.negation));
+            }
+            f = f.or(f2);
+        }
         return f;
     }
 
