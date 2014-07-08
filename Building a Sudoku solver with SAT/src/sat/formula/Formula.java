@@ -119,7 +119,7 @@ public class Formula {
     public Formula and(Formula p) {
         // TODO: implement this.
         Formula f = this;
-        for (Clause c : clauses) {
+        for (Clause c : p.clauses) {
             f = f.addClause(c);
         }
         return f;

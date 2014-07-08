@@ -9,7 +9,6 @@ import sat.formula.Clause;
 import sat.formula.Formula;
 import sat.formula.Literal;
 import sat.formula.PosLiteral;
-import sat.formula.NegLiteral;
 
 /**
  * A simple DPLL SAT solver. See http://en.wikipedia.org/wiki/DPLL_algorithm
@@ -26,13 +25,7 @@ public class SATSolver {
      */
     public static Environment solve(Formula formula) {
         // TODO: implement this.
-        Environment e = new Environment();
-        for (Clause c : formula.getClauses()) {
-            for (Literal l : c) {
-                e = e.put(l.getVariable(), Bool.UNDEFINED);
-            }
-        }
-        return solve(formula.getClauses(), e);
+        return solve(formula.getClauses(), new Environment());
     }
 
     /**
@@ -74,7 +67,11 @@ public class SATSolver {
             return solve(substitute(clauses, l), env.put(v, b));
         } else {
             Environment e = solve(substitute(clauses, l), env.put(v, b));
-            return e != null ? e : solve(substitute(clauses, l.getNegation()), env.put(v, b.not()));
+            if (e == null) {
+                return solve(substitute(clauses, l.getNegation()), env.put(v, b.not()));
+            } else {
+                return e;
+            }
         }
     }
 
@@ -92,19 +89,11 @@ public class SATSolver {
             Literal l) {
         // TODO: implement this.
         ImList<Clause> newClauses = new EmptyImList<Clause>();
-    Label:
         for (Clause c: clauses) {
-            Clause newClause = new Clause();
-            for (Literal lt : c) {
-                if (lt.equals(l)) {
-                    continue Label;
-                } else if (lt.equals(l.getNegation())) {
-                    continue;
-                } else {
-                    newClause = newClause.add(lt);
-                }
+            Clause newClause = c.reduce(l);
+            if (newClause != null) {
+                newClauses = newClauses.add(newClause);
             }
-            newClauses = newClauses.add(newClause);
         }
         return newClauses;
     }

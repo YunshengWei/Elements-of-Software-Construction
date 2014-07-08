@@ -10,7 +10,11 @@ import java.io.*;
 
 import sat.env.Environment;
 import sat.env.Variable;
+import sat.env.Bool;
 import sat.formula.Formula;
+import sat.formula.Clause;
+import sat.formula.PosLiteral;
+import sat.formula.NegLiteral;
 
 /**
  * Sudoku is an immutable abstract datatype representing instances of Sudoku.
@@ -30,7 +34,7 @@ public class Sudoku {
     // use it to index into occupies[i][j][k])
     private final int[][] square;
     // occupies [i,j,k] means that kth symbol occupies entry in row i, column j
-    private final Variable[][][] occupies = null;
+    private final Variable[][][] occupies;
 
     // Rep invariant:
     // size == dim * dim
@@ -72,6 +76,19 @@ public class Sudoku {
         this.dim = dim;
         this.size = dim * dim;
         this.square = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                square[i][j] = -1;
+            }
+        }
+        occupies = new Variable[size][size][size];
+        for (Integer i = 0; i < size; i++) {
+            for (Integer j = 0; j < size; j++) {
+                for (Integer k = 0; k < size;k ++) {
+                    occupies[i][j][k] = new Variable(i.toString() + j.toString() + k.toString());
+                }
+            }
+        }
         checkRep();
     }
 
@@ -187,9 +204,80 @@ public class Sudoku {
      *         occupies the entry in row i, column j
      */
     public Formula getProblem() {
-
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        Formula formula = new Formula();
+        // Solution must be consistent with the starting grid.
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (square[i][j] != -1) {
+                    formula = formula.and(new Formula(occupies[i][j][square[i][j]]));
+                }
+            }
+        }
+        // At most one digit per square.
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                for (int k1 = 0; k1 < size; k1++) {
+                    for (int k2 = k1 + 1; k2 < size; k2++) {
+                        formula = formula.addClause(new Clause().add(
+                                NegLiteral.make(occupies[i][j][k1])).add(
+                                        NegLiteral.make(occupies[i][j][k2])));
+                    }
+                }
+            }
+        }
+        // In each row, each digit must appear exactly once.
+        // Add redundant constraints to speed up backtracking
+        for (int i = 0; i < size; i++) {
+            for (int k = 0; k < size; k++) {
+                Clause clause = new Clause();
+                for (int j = 0; j < size; j++) {
+                    clause = clause.add(PosLiteral.make(occupies[i][j][k]));
+                }
+                formula = formula.addClause(clause);
+                for (int j1 = 0; j1 < size; j1++) {
+                    for (int j2 = j1 + 1; j2 < size; j2++) {
+                        formula = formula.addClause(new Clause().add(
+                                NegLiteral.make(occupies[i][j1][k])).add(
+                                        NegLiteral.make(occupies[i][j2][k])));
+                    }
+                }
+            }
+        }
+        // In each column, each digit must appear exactly once.
+        // Add redundant constraints to speed up backtracking
+        for (int j = 0; j < size; j++) {
+            for (int k = 0; k < size; k++) {
+                Clause clause = new Clause();
+                for (int i = 0; i < size; i++) {
+                    clause = clause.add(PosLiteral.make(occupies[i][j][k]));
+                }
+                formula = formula.addClause(clause);
+                for (int i1 = 0; i1 < size; i1++) {
+                    for (int i2 = i1 + 1; i2 < size; i2++) {
+                        formula = formula.addClause(new Clause().add(
+                                NegLiteral.make(occupies[i1][j][k])).add(
+                                        NegLiteral.make(occupies[i2][j][k])));
+                    }
+                }
+            }
+        }
+        // In each block, each digit must appear exactly once.
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                for (int k = 0; k < size; k++) {
+                    Clause clause = new Clause();
+                    for (int s = 0; s < dim; s++) {
+                        for (int t = 0; t < dim; t++) {
+                            clause = clause.add(PosLiteral.make(occupies[i*dim+s][j*dim+t][k]));
+                        }
+                    }
+                    formula = formula.addClause(clause);
+                }
+            }
+        }
+        System.out.println(formula.getSize());
+        return formula;
     }
 
     /**
@@ -202,9 +290,19 @@ public class Sudoku {
      *         blank entries.
      */
     public Sudoku interpretSolution(Environment e) {
-
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        int square[][] = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                for (int k = 0; k < size; k++) {
+                    if (e.get(occupies[i][j][k]) == Bool.TRUE) {
+                        square[i][j] = k + 1;
+                        break;
+                    }
+                }
+            }
+        }
+        return new Sudoku((int)(Math.sqrt((double)size)), square);
     }
 
 }
