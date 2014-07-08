@@ -1,10 +1,15 @@
 package sat;
 
 import immutable.ImList;
+import immutable.EmptyImList;
+import sat.env.Bool;
+import sat.env.Variable;
 import sat.env.Environment;
 import sat.formula.Clause;
 import sat.formula.Formula;
 import sat.formula.Literal;
+import sat.formula.PosLiteral;
+import sat.formula.NegLiteral;
 
 /**
  * A simple DPLL SAT solver. See http://en.wikipedia.org/wiki/DPLL_algorithm
@@ -21,7 +26,13 @@ public class SATSolver {
      */
     public static Environment solve(Formula formula) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        Environment e = new Environment();
+        for (Clause c : formula.getClauses()) {
+            for (Literal l : c) {
+                e = e.put(l.getVariable(), Bool.UNDEFINED);
+            }
+        }
+        return solve(formula.getClauses(), e);
     }
 
     /**
@@ -38,7 +49,33 @@ public class SATSolver {
      */
     private static Environment solve(ImList<Clause> clauses, Environment env) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        if (clauses.isEmpty()) {
+            return env;
+        }
+        Clause minC = clauses.first();
+        for (Clause c : clauses) {
+            if (c.isEmpty()) {
+                return null;
+            }
+            if (c.size() < minC.size()) {
+                minC = c;
+            }
+        }
+        
+        Literal l = minC.chooseLiteral();
+        Variable v = l.getVariable();
+        Bool b;
+        if (l instanceof PosLiteral) {
+            b = Bool.TRUE;
+        } else {
+            b = Bool.FALSE;
+        }
+        if (minC.isUnit()) {
+            return solve(substitute(clauses, l), env.put(v, b));
+        } else {
+            Environment e = solve(substitute(clauses, l), env.put(v, b));
+            return e != null ? e : solve(substitute(clauses, l.getNegation()), env.put(v, b.not()));
+        }
     }
 
     /**
@@ -54,7 +91,22 @@ public class SATSolver {
     private static ImList<Clause> substitute(ImList<Clause> clauses,
             Literal l) {
         // TODO: implement this.
-        throw new RuntimeException("not yet implemented.");
+        ImList<Clause> newClauses = new EmptyImList<Clause>();
+    Label:
+        for (Clause c: clauses) {
+            Clause newClause = new Clause();
+            for (Literal lt : c) {
+                if (lt.equals(l)) {
+                    continue Label;
+                } else if (lt.equals(l.getNegation())) {
+                    continue;
+                } else {
+                    newClause = newClause.add(lt);
+                }
+            }
+            newClauses = newClauses.add(newClause);
+        }
+        return newClauses;
     }
 
 }

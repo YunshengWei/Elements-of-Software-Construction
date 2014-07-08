@@ -42,7 +42,7 @@ public class SATSolverTest {
         f = f.addClause(c);
         Environment e = SATSolver.solve(f);
         assertTrue(e.get(new Variable("a")) == Bool.TRUE);
-        assertTrue(e.get(new Variable("b")) == Bool.UNDEFINED);
+        assertTrue(e.get(new Variable("b")) == Bool.TRUE);
     }
     
     @Test
