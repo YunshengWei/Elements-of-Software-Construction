@@ -1,6 +1,8 @@
 package util;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.ArrayList;
 
 public class BigMath {
 
@@ -27,5 +29,42 @@ public class BigMath {
               a = mid.add(BigInteger.ONE);
         }
         return a.subtract(BigInteger.ONE);
+    }
+    
+    /**
+     * Gien a BigInteger input n, where n >= 2, 
+     * BigInteger low, hi, where 1 <= low <= high,
+     * returns a List containing all BigIntegers x
+     * such that low <= x <= hi AND x divides N evenly.
+     * Repeated prime factors will be found multiple times.
+     * 
+     * @param n: BigInteger, n >= 2
+     * @param low: BigInteger
+     * @param hi: BigInteger, 1 <= low <= high
+     * @return a List containing all BigIntegers x
+     * such that low <= x <= hi AND x divides N evenly.
+     * Repeated prime factors will be found multiple times.
+     */
+    public static List<BigInteger> primeFactors(
+        BigInteger n, BigInteger low, BigInteger hi) {
+        ArrayList<BigInteger> al = new ArrayList<BigInteger>();
+        for (BigInteger i = low; i.compareTo(hi) <= 0; i = i.add(BigInteger.ONE)) {
+            if (i.isProbablePrime(5)) {
+                while (n.remainder(i).equals(BigInteger.ZERO)) {
+                    al.add(i);
+                    n = n.divide(i);
+                }
+            }
+        }
+        return al;
+    }
+    
+    public static void main(String[] args) {
+        BigInteger n = new BigInteger("264");
+        BigInteger low = new BigInteger("2");
+        BigInteger hi = new BigInteger("17");
+        for (BigInteger i : BigMath.primeFactors(n, low, hi)) {
+            System.out.println(i.toString());
+        }
     }
 }
