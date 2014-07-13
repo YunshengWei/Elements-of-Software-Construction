@@ -20,17 +20,14 @@ public class MinesweeperServerRunnable implements Runnable {
 
     @Override
     public void run() {
-        
-
+        handleConnection();
     }
 
     /**
      * Handle a single client connection. Returns when client disconnects.
      * 
-     * @throws IOException
-     *             if connection has an error or terminates unexpectedly
      */
-    private void handleConnection() throws IOException {
+    private void handleConnection(){
         try (
                 BufferedReader in = new BufferedReader(
                         new InputStreamReader(socket.getInputStream()));
@@ -42,8 +39,14 @@ public class MinesweeperServerRunnable implements Runnable {
                    out.println(output);
                }
             }
-            if (socket.is)
-            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 //        BufferedReader in = new BufferedReader(new InputStreamReader(
 //                socket.getInputStream()));
