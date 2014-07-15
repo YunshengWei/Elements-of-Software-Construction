@@ -3,6 +3,7 @@ package minesweeper.server;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
 import minesweeper.Board;
 
 /**
@@ -40,28 +41,15 @@ public class MinesweeperServer {
     public void serve() throws IOException {
         while (true) {
             final Socket clientSocket = serverSocket.accept();
-            Thread thread = new Thread(new MinesweeperServerRunnable(clientSocket, board));
+            Thread thread = new Thread(new MinesweeperServerRunnable(clientSocket, board, debug));
             thread.start();
         }
-//        while (true) {
-//            // block until a client connects
-//            Socket socket = serverSocket.accept();
-//
-//            // handle the client
-//            try {
-//                handleConnection(socket);
-//            } catch (IOException e) {
-//                e.printStackTrace(); // but don't terminate serve()
-//            } finally {
-//                socket.close();
-//            }
-//        }
     }
 
     /**
      * Start a MinesweeperServer using the given arguments.
      * 
-     * Usage: MinesweeperServer [--debug] [--port PORT] [--size (SIZE_X,SIZE_Y)
+     * Usage: MinesweeperServer [--debug] [--port PORT] [--size SIZE_X,SIZE_Y
      * | --file FILE]
      * 
      * The --debug argument means the server should run in debug mode. The
@@ -88,8 +76,14 @@ public class MinesweeperServer {
      * The board file format, for use with the "--file" option, is specified by
      * the following grammar:
      * 
-     * FILE :== LINE+ LINE :== (VAL SPACE)* VAL NEWLINE VAL :== 0 | 1 SPACE :==
-     * " " NEWLINE :== "\r?\n"
+     * FILE :== BOARD LINE+ 
+     * BOARD :== X SPACE Y NEWLINE
+     * LINE :== (VAL SPACE)* VAL NEWLINE 
+     * VAL :== 0 | 1 
+     * X :== INT
+     * Y :== INT
+     * SPACE :== " " 
+     * NEWLINE :== "\r?\n"
      * 
      * If neither FILE nor SIZE_* is given, generate a random board of size
      * 10x10.
@@ -182,7 +176,12 @@ public class MinesweeperServer {
             Integer sizeX, Integer sizeY, int port) throws IOException {
 
         // TODO: Continue your implementation here.
-        
+    	Board board = null;
+        if (file != null) {
+        	board = new Board(file);
+        } else {
+        	board = new Board(sizeX, sizeY);
+        }
         MinesweeperServer server = new MinesweeperServer(port, debug, board);
         server.serve();
     }
