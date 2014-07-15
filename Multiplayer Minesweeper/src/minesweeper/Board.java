@@ -97,6 +97,7 @@ public class Board {
 		}
 		boolean hasBomb = board[y][x];
 		board[y][x] = false;
+		// TODO Finish the dig procedure
 		state[y][x] = 1;
 		return hasBomb;
 	}
