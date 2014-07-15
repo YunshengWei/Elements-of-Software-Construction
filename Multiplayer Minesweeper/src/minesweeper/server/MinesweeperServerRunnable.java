@@ -36,14 +36,14 @@ public class MinesweeperServerRunnable implements Runnable {
                         new InputStreamReader(socket.getInputStream()));
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             ) {
-        	out.print(String.format(
+        	out.format(
         			"Welcome to Minesweeper. Board: %s columns by %s rows."
         		  + " Players: %s including you. Type 'help' for help.%n",
-        		    board.getSizeX(), board.getSizeY(), Thread.activeCount() - 1));
+        		    board.getSizeX(), board.getSizeY(), Thread.activeCount() - 1);
             for (String line = in.readLine(); line != null && !readyToClose; line = in.readLine()) {
                String output = handleRequest(line);
                if (output != null) {
-                   out.print(output);
+                   out.format(output);
                }
             }
         } catch (IOException e) {
@@ -121,31 +121,37 @@ public class MinesweeperServerRunnable implements Runnable {
     }
     
     private String handleDig(int x, int y) {
-    	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
-    		&& board.getState(x, y) == '-') {
-    		if (board.dig(x, y)) {
-    			if (debug == false) {
-    				readyToClose = true;
-    			}
-    			return String.format("BOOM!%n");
-    		}
-    	}
-    	return board.toString();
+        synchronized(board) {
+        	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
+        		&& board.getState(x, y) == '-') {
+        		if (board.dig(x, y)) {
+        			if (debug == false) {
+        				readyToClose = true;
+        			}
+        			return String.format("BOOM!%n");
+        		}
+        	}
+        	return board.toString();
+        }
     }
     
     private String handleFlag(int x, int y) {
-    	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
-        		&& board.getState(x, y) == '-') {
-        		board.setFlag(x, y);
-        	}
-    	return board.toString();
+        synchronized(board) {
+        	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
+            		&& board.getState(x, y) == '-') {
+            		board.setFlag(x, y);
+            	}
+        	return board.toString();
+        }
     }
     
     private String handleDeflag(int x, int y) {
-    	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
-        		&& board.getState(x, y) == 'F') {
-        		board.deFlag(x, y);
-        	}
-    	return board.toString();
+        synchronized (board) {
+        	if (x >= 0 && x < board.getSizeX() && y >= 0 && y < board.getSizeY()
+            		&& board.getState(x, y) == 'F') {
+            		board.deFlag(x, y);
+            	}
+        	return board.toString();
+        }
     }
 }

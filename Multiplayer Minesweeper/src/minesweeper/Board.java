@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Random;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.ArrayList;
 
 public class Board {
 	
@@ -54,22 +57,33 @@ public class Board {
 		return x >= 0 && x < sizeX && y >= 0 && y < sizeY;
 	}
 	
+	// return all neighbors of (x, y) as an ArrayList<Integer[]>
+	private ArrayList<Integer[]> getNeighbors(int x, int y) {
+	    ArrayList<Integer[]> neighbors = new ArrayList<Integer[]>();
+	    for (int i = -1; i <= 1; i++) {
+	        for (int j = -1; j <= 1; j++) {
+	            if (validPos(x + i, y +j) && (i != 0 || j != 0)) {
+	                neighbors.add(new Integer[] {x + i, y + j});
+	            }
+	        }
+	    }
+	    return neighbors;
+	}
+	
 	// return count of bombs in 3 * 3 neighborhood of (x, y) ((x, y) excluded)
-	private int bombCountNeighbor(int x, int y) {
+	private synchronized int bombCountNeighbor(int x, int y) {
 		int count = 0;
-		for (int i = -1; i <= 1; i++) {
-			for (int j = -1; j <= 1; j++) {
-				if (validPos(x, y) && board[y][x]) {
-					count += 1;
-				}
-			}
+		for (Integer[] pos : getNeighbors(x, y)) {
+		    if (board[pos[1]][pos[0]] == true) {
+		        count += 1;
+		    }
 		}
 		return count;
 	}
 	
 	// (x, y) must be untouched
 	// (x, y) must be in range
-	public void setFlag(int x, int y) {
+	public synchronized void setFlag(int x, int y) {
 		if (state[y][x] == '-') {
 			state[y][x] = 'F';
 		} else {
@@ -79,7 +93,7 @@ public class Board {
 	
 	// (x, y) must be flagged
 	// (x, y) must be in range
-	public void deFlag(int x, int y) {
+	public synchronized void deFlag(int x, int y) {
 		if (state[y][x] == 'F') {
 			state[y][x] = '-';
 		} else {
@@ -91,19 +105,50 @@ public class Board {
 	// remove bomb in (x, y) if any
 	// return true if board[y][x] has bomb else false
 	// (x, y) must be in range
-	public boolean dig(int x, int y) {
+	public synchronized boolean dig(int x, int y) {
 		if (state[y][x] != '-') {
 			throw new UnsupportedOperationException();
 		}
 		boolean hasBomb = board[y][x];
-		board[y][x] = false;
-		// TODO Finish the dig procedure
-		state[y][x] = 1;
+		if (hasBomb) {
+		    board[y][x] = false;
+		    for (Integer[] pos : getNeighbors(x, y)) {
+		        int tx = pos[0];
+		        int ty = pos[1];
+		        if (state[ty][tx] != '-'
+		            && state[ty][tx] != 'F') {
+		            state[ty][tx] -= 1;
+		        }
+		    }
+		}
+		
+	    ArrayDeque<Integer[]> queue = new ArrayDeque<Integer[]>();
+	    HashSet<String> used = new HashSet<String>();
+	    queue.add(new Integer[] {x, y});
+	    used.add(String.format("%s,%s", x, y));
+	    while (!queue.isEmpty()) {
+	        Integer[] pos = queue.poll();
+	        int tx = pos[0];
+	        int ty = pos[1];
+	        int bombCount = bombCountNeighbor(tx, ty);
+	        if (bombCount == 0) {
+	            state[ty][tx] = ' ';
+	            for (Integer[] tpos : getNeighbors(tx, ty)) {
+	                if (!used.contains(String.format("%s,%s", tpos[0], tpos[1]))) {
+	                    queue.add(new Integer[] {tpos[0], tpos[1]});
+	                    used.add(String.format("%s,%s", tpos[0], tpos[1]));
+	                }
+	            }
+	        } else {
+	            state[ty][tx] = (char) ('0' + (char) bombCount);
+	        }
+	    }
+	    
 		return hasBomb;
 	}
 	
 	// (x, y) must be in range
-	public char getState(int x, int y) {
+	public synchronized char getState(int x, int y) {
 		return state[y][x];
 	}
 	
@@ -117,12 +162,14 @@ public class Board {
 	
 	// a string representation of the board's state	
 	@Override
-	public String toString() {
+	public synchronized String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (char[] sa : state) {
 			for (char s : sa) {
 				sb.append(s);
+				sb.append(' ');
 			}
+			sb.deleteCharAt(sb.length() - 1);
 			sb.append(System.lineSeparator());
 		}
 		return sb.toString();
