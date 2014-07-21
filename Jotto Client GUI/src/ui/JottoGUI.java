@@ -152,6 +152,11 @@ public class JottoGUI extends JFrame
             new Thread(new Runnable() {
                 public void run() {
                     String word = guess.getText();
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            guess.setText("");
+                        }
+                    });
                     String response = jottoModel.makeGuess(word);
                     final Object[] output;
                     if (response.startsWith("error")) {
@@ -169,7 +174,6 @@ public class JottoGUI extends JFrame
                     System.out.println(response);
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            guess.setText("");
                             ((DefaultTableModel) guessTable.getModel()).insertRow(0, output);
                         }
                     });
